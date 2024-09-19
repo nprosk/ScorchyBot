@@ -4,6 +4,7 @@ const {
   checkMessageForArrayMatch,
   parseDatabase,
   queryOpenAIRoastUser,
+  replaceAll,
 } = require("../utils/functions");
 
 module.exports = {
@@ -11,17 +12,22 @@ module.exports = {
   async execute(message) {
     if (message.author.bot) return;
 
-    let db = parseDatabase();
+    const db = parseDatabase();
 
     if (!db) return;
 
-    if (db.length === 0) return;
+    const roastList = db.roastList;
 
-    for (const item of db) {
+    if (!roastList || roastList.length === 0) return;
+
+    for (const item of roastList) {
       if (item.keywords && checkMessageForArrayMatch(message, item.keywords)) {
-        if (!item.prompt || !item.user) continue;
-        const completion = await queryOpenAIRoastUser(item.prompt, item.user);
-        message.reply(completion.choices[0].message.content);
+        if (!item.user) continue;
+        const newPrompt = item.prompt ? item.prompt : db.defaultPrompt;
+        if (!newPrompt) continue;
+        const completion = await queryOpenAIRoastUser(newPrompt, item.user);
+        const response = replaceAll(completion.choices[0].message.content, item.user, `<@${item.user}>`);
+        message.reply(response);
         return;
       }
     }

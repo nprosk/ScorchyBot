@@ -2,7 +2,7 @@ const fs = require("node:fs");
 const OpenAI = require("openai");
 
 const checkMessageForStringMatch = (message, text) => {
-  return message.content.toLowerCase().includes(text);
+  return message.content.toLowerCase().includes(text.toLowerCase());
 };
 
 const queryOpenAI = async (prompt, model) => {
@@ -28,6 +28,13 @@ module.exports = {
       return null;
     }
   },
+  writeDatabase(data) {
+    try {
+      fs.writeFileSync("db.json", JSON.stringify(data));
+    } catch (err) {
+      console.error(err);
+    }
+  },
   replaceAll(str, find, replace) {
     return str.replace(new RegExp(find, "g"), replace);
   },
@@ -38,7 +45,8 @@ module.exports = {
     const newPrompt =
       prompt +
       ` Make sure that every time you refer to this person, you refer to them as ${user}. 
-      Also, refer to them at least 1 time in the message. Give me just the insult, nothing else, they can handle it`;
+      Also, refer to them at least 1 time in the message. Give me just the message to them, nothing else, they can handle it. 
+      Don't talk in first person, for example use makes people feel instead of makes me feel, but direct the message at them.`;
     return await queryOpenAI(newPrompt, model);
   },
 };
