@@ -27,7 +27,7 @@ module.exports = {
         if (!newPrompt) continue;
         const completion = await queryOpenAIRoastUser(newPrompt, item.user);
         const response = replaceAll(completion.choices[0].message.content, item.user, `<@${item.user}>`);
-        message.reply(response);
+        await message.reply(response);
         return;
       }
     }
