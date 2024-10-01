@@ -1,8 +1,8 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
-const { parseDatabase, writeDatabase } = require("../../utils/functions");
+const Roast = require("../../models/roastList");
 
 module.exports = {
-    data: new SlashCommandBuilder()
+  data: new SlashCommandBuilder()
     .setName("change-prompt")
     .setDescription("Change the prompt for a user in the roast list!")
     .addUserOption((option) =>
@@ -14,43 +14,39 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName("prompt")
-        .setDescription("The new prompt to use")
+        .setDescription("The new prompt to use (null to remove prompt)")
         .setRequired(true)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   async execute(interaction) {
-    let db = parseDatabase();
     const user = interaction.options.getUser("user");
-    const prompt = interaction.options.getString("prompt");
+    let prompt = interaction.options.getString("prompt");
+    prompt === "null" ? (prompt = null) : prompt;
 
-    if (!db) {
-      db = { defaultPrompt: null, roastList: [] };
-    }
-
-    if (!db.roastList) {
-      db.roastList = [];
-    }
-
-    if (db.roastList.some((item) => item.user === user.id)) {
-      db.roastList = db.roastList.map((item) => {
-        if (item.user === user.id) {
-          item.prompt = prompt;
+    await Roast.findOneAndUpdate(
+      { user: user.id },
+      { prompt: prompt },
+      { new: true, runValidators: true, upsert: false }
+    )
+      .then((updatedDoc) => {
+        if (!updatedDoc) {
+          return interaction.reply({
+            content: `The user is not in the roast list! Add them with /add-user first!`,
+            ephemeral: true,
+          });
+        } else {
+          return interaction.reply({
+            content: `Prompt has been changed for user ${user} to: ${prompt}`,
+            ephemeral: true,
+          });
         }
-
-        return item;
+      })
+      .catch((error) => {
+        console.error(error);
+        return interaction.reply({
+          content: "There was an error changing the prompt!",
+          ephemeral: true,
+        });
       });
-
-      writeDatabase(db);
-
-      await interaction.reply({
-        content: `User ${user} has had their prompt changed to: ${prompt}`,
-        ephemeral: true,
-      });
-    } else {
-      await interaction.reply({
-        content: `The user is not in the roast list!`,
-        ephemeral: true,
-      });
-    }
   },
 };
