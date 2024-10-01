@@ -6,6 +6,7 @@ const {
   queryOpenAIRoastUser,
   replaceAll,
 } = require("../utils/functions");
+const Roast = require("../models/roastList");
 
 module.exports = {
   name: Events.MessageCreate,
@@ -13,10 +14,9 @@ module.exports = {
     if (message.author.bot) return;
 
     const db = parseDatabase();
+    const roastList = await Roast.find({}, {}, { lean: true });
 
     if (!db) return;
-
-    const roastList = db.roastList;
 
     if (!roastList || roastList.length === 0) return;
 

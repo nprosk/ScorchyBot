@@ -1,5 +1,5 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
-const { parseDatabase, writeDatabase } = require("../../utils/functions");
+const { SlashCommandBuilder, PermissionFlagsBits, Interaction, InteractionType, ChatInputCommandInteraction } = require("discord.js");
+const Roast = require("../../models/roastList");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -26,26 +26,23 @@ module.exports = {
         .setRequired(false)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    /**
+     * 
+     * @param {ChatInputCommandInteraction} interaction 
+     * @returns 
+     */
   async execute(interaction) {
-    let db = parseDatabase();
     const user = interaction.options.getUser("user");
 
-    if (!db) {
-      db = { defaultPrompt: null, roastList: [] };
-    }
-
-    if (!db.roastList) {
-      db.roastList = [];
-    }
-
-    if (db.roastList.some((item) => item.user === user.id)) {
-      return await interaction.reply({
+    const existingUser = await Roast.findOne({ user: user.id });
+    if (existingUser) {
+      return interaction.reply({
         content: `The user is already in the roast list!
         Change their prompt/add keywords by using the other commands.`,
         ephemeral: true,
       });
     } else {
-      db.roastList.push({
+      const newRoast = new Roast({
         user: user.id,
         prompt: interaction.options.getString("prompt"),
         keywords: interaction.options.getString("keywords")
@@ -53,9 +50,15 @@ module.exports = {
           : [],
       });
 
-      writeDatabase(db);
+      newRoast.save().catch((error) => {
+        console.error(error);
+        return interaction.reply({
+          content: "There was an error adding the user!",
+          ephemeral: true,
+        });
+      });
 
-      await interaction.reply({
+      return interaction.reply({
         content: `User ${user} has been added to the roast list!`,
         ephemeral: true,
       });
