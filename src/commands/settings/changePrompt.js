@@ -24,7 +24,7 @@ module.exports = {
     prompt === "null" ? (prompt = null) : prompt;
 
     await Roast.findOneAndUpdate(
-      { user: user.id },
+      { user: user.id, server: interaction.guild.id },
       { prompt: prompt },
       { new: true, runValidators: true, upsert: false }
     )

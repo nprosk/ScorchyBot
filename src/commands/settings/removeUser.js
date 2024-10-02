@@ -15,7 +15,7 @@ module.exports = {
   async execute(interaction) {
     const user = interaction.options.getUser("user");
 
-    await Roast.deleteOne({ user: user.id })
+    await Roast.deleteOne({ user: user.id, server: interaction.guild.id })
       .then((result) => {
         if (result.deletedCount === 0) {
           return interaction.reply({

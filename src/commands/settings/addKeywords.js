@@ -25,7 +25,7 @@ module.exports = {
     const keywords = interaction.options.getString("keywords").split(",");
 
     await Roast.findOneAndUpdate(
-      { user: user.id },
+      { user: user.id, server: interaction.guild.id },
       { $addToSet: { keywords: { $each: keywords } } },
       { new: true, runValidators: true, upsert: false }
     )

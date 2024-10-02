@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, Interaction, InteractionType, ChatInputCommandInteraction } = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits, ChatInputCommandInteraction } = require("discord.js");
 const Roast = require("../../models/roastList");
 
 module.exports = {
@@ -34,7 +34,7 @@ module.exports = {
   async execute(interaction) {
     const user = interaction.options.getUser("user");
 
-    const existingUser = await Roast.findOne({ user: user.id });
+    const existingUser = await Roast.findOne({ user: user.id, server: interaction.guild.id });
     if (existingUser) {
       return interaction.reply({
         content: `The user is already in the roast list!
@@ -44,6 +44,7 @@ module.exports = {
     } else {
       const newRoast = new Roast({
         user: user.id,
+        server: interaction.guild.id,
         prompt: interaction.options.getString("prompt"),
         keywords: interaction.options.getString("keywords")
           ? interaction.options.getString("keywords").split(",")
