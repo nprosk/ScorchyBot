@@ -4,7 +4,7 @@ const DefaultPrompt = require("../../models/defaultPrompt");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("change-default-prompt")
-    .setDescription("Change the default prompt used for roasts")
+    .setDescription("Change the default prompt used for roasts in this server")
     .addStringOption((option) =>
       option
         .setName("prompt")
@@ -14,7 +14,6 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   async execute(interaction) {
     const prompt = interaction.options.getString("prompt") === "null" ? null : interaction.options.getString("prompt");
-
 
     await DefaultPrompt.findOneAndUpdate(
       { server: interaction.guild.id },

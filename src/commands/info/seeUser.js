@@ -15,17 +15,32 @@ module.exports = {
   async execute(interaction) {
     const user = interaction.user;
 
-    const roast = await Roast.findOne({ user: user.id, server: interaction.guild.id }, {}, { lean: true });
-    if (!roast) {
-      return interaction.reply({
-        content: `User ${user} is not in the roast list!`,
-        ephemeral: true,
+    await Roast.findOne(
+      { user: user.id, server: interaction.guild.id },
+      {},
+      { lean: true }
+    )
+      .then((doc) => {
+        if (!doc) {
+          return interaction.reply({
+            content: `The user is not in the roast list! Add them with /add-user first!`,
+            ephemeral: true,
+          });
+        } else {
+          return interaction.reply({
+            content: `User: <@${doc.user}>\nPrompt: ${
+              doc.prompt
+            }\nKeywords: ${doc.keywords.join(", ")}`,
+            ephemeral: true,
+          });
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        return interaction.reply({
+          content: "There was an error finding the user!",
+          ephemeral: true,
+        });
       });
-    } else {
-      return interaction.reply({
-        content: `User: ${user} | Prompt: ${roast.prompt ? roast.prompt : "None"} | Keywords: ${roast.keywords.join(", ")}`,
-        ephemeral: true,
-      });
-    }
   },
 };

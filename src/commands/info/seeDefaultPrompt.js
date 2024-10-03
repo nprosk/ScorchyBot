@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
-const Roast = require("../../models/roastList");
+const DefaultPrompt = require("../../models/defaultPrompt");
 const { parseDatabase } = require("../../utils/functions");
 
 module.exports = {
@@ -9,26 +9,48 @@ module.exports = {
     .addBooleanOption((option) =>
       option
         .setName("global")
-        .setDescription("See the global default prompt")
+        .setDescription("True for global prompt, false for server-specific prompt")
+        .setRequired(true)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   async execute(interaction) {
     const global = interaction.options.getBoolean("global");
 
-    const defaultPromptLocal = await Roast.findOne(
-      { server: interaction.guild.id },
-      {},
-      { lean: true }
-    );
-
-    const db = parseDatabase();
-    const defaultPromptGlobal = db ? db.defaultPrompt : null;
-
-    const defaultPrompt = global ? defaultPromptGlobal : defaultPromptLocal.prompt;
-
-    return interaction.reply({
-      content: `The current default ` + (global ? `global ` : ``) + `prompt is: ${defaultPrompt}`,
-      ephemeral: true,
-    });
+    if (!global) {
+      await DefaultPrompt.findOne({ server: interaction.guild.id }, {}, { lean: true })
+      .then((doc) => {
+        if (!doc || !doc.prompt) {
+          return interaction.reply({
+            content: `There is no default prompt set for this server!`,
+            ephemeral: true,
+          });
+        } else {
+          return interaction.reply({
+            content: `The current default prompt for this server is: ${doc.prompt}`,
+            ephemeral: true,
+          });
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        return interaction.reply({
+          content: "There was an error finding the default prompt!",
+          ephemeral: true,
+        });
+      });
+    } else {
+      const db = parseDatabase();
+      if (!db || !db.defaultPromptGlobal) {
+        return interaction.reply({
+          content: `There is no default global prompt set!`,
+          ephemeral: true,
+        });
+      } else {
+        return interaction.reply({
+          content: `The current default global prompt is: ${db.defaultPromptGlobal}`,
+          ephemeral: true,
+        });
+      }
+    }
   },
 };

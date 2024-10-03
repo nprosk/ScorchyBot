@@ -34,11 +34,11 @@ module.exports = {
   async execute(interaction) {
     const user = interaction.options.getUser("user");
 
-    const existingUser = await Roast.findOne({ user: user.id, server: interaction.guild.id });
+    const existingUser = await Roast.findOne({ user: user.id, server: interaction.guild.id }).catch(console.error);
     if (existingUser) {
       return interaction.reply({
-        content: `The user is already in the roast list!
-        Change their prompt/add keywords by using the other commands.`,
+        content: "The user is already in the roast list!" +
+        "Change their prompt/add keywords by using the other commands.",
         ephemeral: true,
       });
     } else {
